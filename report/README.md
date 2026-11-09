@@ -134,28 +134,43 @@ python -m mkdocs serve
 
 ## 3. 问题与解决
 
-> 记录你实际遇到的问题。如果没有遇到错误，说明你核对了哪些日志和配置。
+### 问题 1：首次部署失败，报 "Get Pages site failed"
 
-### 问题 1：（示例，按需删除）
-
-**现象**：
+**现象**：第一次推送代码后，GitHub Actions 的 build 任务失败，网站无法部署。
 
 **关键日志**：
+```
+HttpError: Not Found
+Get Pages site failed. Please verify that the repository has Pages enabled
+and configured to build using GitHub Actions...
+```
 
 **原因分析**：
+虽然已经在 Settings → Pages 里把 Source 选为了 GitHub Actions，但 Pages 站点还没有被真正创建（需要至少一次成功的部署才能创建）。而 `configure-pages` 动作在站点不存在的情况下会报错，形成了"先有鸡还是先有蛋"的死循环。
 
 **解决操作**：
+在工作流的 `configure-pages` 步骤中添加 `enablement: true` 参数，让它在 Pages 未启用时自动启用。
 
-**结果**：
+```yaml
+- name: Configure Pages
+  uses: actions/configure-pages@v5
+  with:
+    enablement: true
+```
 
-### 无问题情况说明
+修改后重新提交推送。
 
-如果整个过程比较顺利，没有遇到明显错误，请在此处说明你核对了哪些内容来确保一切正常，例如：
+**结果**：第二次推送后 build 和 deploy 均成功，网站正常发布。
 
-- 核对了 `mkdocs build --strict` 没有任何警告
-- 核对了 Actions 日志中每个步骤都显示绿色对勾
-- 核对了网站四个页面的所有链接都能正常跳转
-- 核对了第二次推送后网站内容确实更新了
+### 核对无误的内容
+
+整个过程中还核对了以下内容以确保一切正常：
+
+- 核对了 Actions 日志中 build 和 deploy 两个任务的所有步骤都显示绿色对勾
+- 核对了网站四个页面（首页、关于、使用指南、API 参考）都能正常访问
+- 核对了页面之间的导航链接和正文中的交叉链接都能正常跳转
+- 核对了表格、代码块等格式渲染正确
+- 核对了第二次修改推送后，网站内容确实自动更新了
 
 ---
 
